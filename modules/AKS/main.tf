@@ -1,6 +1,16 @@
 terraform {
   
   required_version = ">= 0.12.26"
+  required_providers {
+    kubernetes = {
+      source = "hashicorp/azurerm"
+      version = "2.42"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.1.0"
+    }
+  }
 }
 
 #Ideally from terraform recomendations this should be moved to main.
@@ -42,12 +52,17 @@ resource "azurerm_virtual_network" "aksvnet" {
 # Create a Subnet for AKS
 resource "azurerm_subnet" "aks-default" {
   name                 = "aks-${var.subnet_name}"
-  virtual_network_name = azurerm_virtual_network.aksvnet.name
+  virtual_network_name = azurerm_resource_group.aks_rg.location
   resource_group_name  = azurerm_resource_group.aks_rg.name
   address_prefixes     = var.subnet_adress_prefixes                    # ["10.240.0.0/16"]
 }
+resource "azurerm_public_ip" "ingress_ip" {
+  name                = "pip-${var.public_name}"
+  location            = "${azurerm_resource_group.main.location}"
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  allocation_method = "Static"
 
-
+}
 # Creates the Kubernetes cluster.                      
 resource "azurerm_kubernetes_cluster" "akscluster" {
   name                = "aks-${var.cluster_name}"
@@ -75,13 +90,29 @@ resource "azurerm_kubernetes_cluster" "akscluster" {
     environment = "Demo"
   }
 }
+
 #Create Nginx Ingress Controler 
 resource "helm_release" "ingress" {
   name  = "ingress"
-  chart = "stable/nginx-ingress"
+  chart = "ingress-nginx/ingress-nginx"
+  depends_on = [
+     "azurerm_public_ip.ingress_ip"
+ ]
+   set {
+      name= "controller.service.type"
+      value= "LoadBalancer"
+  } 
+   set {
+      name ="controller.service.loadBalancerIP"
+      value= "${azurerm_public_ip.ingress_ip.ip_address}"
+  } 
+ set {
+    name  = "controller.nodeSelector.kubernetes\\.io/os"
+    value = "linux"
+  }
 
   set {
-    name  = "rbac.create"
-    value = "true"
+    name  = "defaultBackend.nodeSelector.kubernetes\\.io/os"
+    value = "linux"
   }
 }
