@@ -90,7 +90,7 @@ resource "azurerm_kubernetes_cluster" "akscluster" {
     environment = "Demo"
   }
 }
-
+#Dont know if it is wright as Azure only shows how to install via azure cli
 #Create Nginx Ingress Controler 
 resource "helm_release" "ingress" {
   name  = "ingress"

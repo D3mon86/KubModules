@@ -1,5 +1,5 @@
 output "client_key" {
-    value = azurerm_kubernetes_cluster.akscluster.kube_config.0.client_key
+    value = azurerm_kubernetes_cluster.aks_rg.kube_config.0.client_key
 }
 
 output "client_certificate" {
@@ -25,4 +25,3 @@ output "kube_config" {
 output "host" {
     value = azurerm_kubernetes_cluster.akscluster.kube_config.0.host
 }
-
