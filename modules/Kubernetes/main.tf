@@ -8,9 +8,9 @@ terraform {
   }
 }
 
-resource "kubernetes_namespace" "test" {
+resource "kubernetes_namespace" "example" {
   metadata {
-    name = "test"
+    name = "example"
   }
 }
 
@@ -35,9 +35,9 @@ resource "kubernetes_ingress" "example" {
   wait_for_load_balancer = true
   metadata {
     name = "example"
-    namespace = kubernetes_namespace.test.metadata.0.name
+    namespace = kubernetes_namespace.example.metadata.0.name
     annotations = {
-      "kubernetes.io/ingress.class" = "nginx"
+      "kubernetes.io/ingress.class" = "${var.ingress_class}"
     }
   }
   spec {
